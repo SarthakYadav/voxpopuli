@@ -10,8 +10,8 @@ from pathlib import Path
 from tqdm import tqdm
 from torchaudio.datasets.utils import _extract_tar
 from torch.hub import download_url_to_file
-
-
+from joblib import Parallel, delayed
+from functools import partial
 from voxpopuli import LANGUAGES, LANGUAGES_V2, YEARS, DOWNLOAD_BASE_URL
 
 
@@ -25,7 +25,19 @@ def get_args():
         choices=["400k", "100k", "10k", "asr"] + LANGUAGES + LANGUAGES_V2,
         help="data subset to download"
     )
+    parser.add_argument("--num_workers", "-j", type=int, default=4,
+                        help="number of workers to download data")
     return parser.parse_args()
+
+
+def process_url(url, out_root):
+    print(f"Downloading {url}...")
+    tar_path = out_root / Path(url).name
+    download_url_to_file(url, tar_path.as_posix(), hash_prefix=None)
+    _extract_tar(tar_path.as_posix())
+    os.remove(tar_path)
+    print(f"Downloaded and extracted {url} to {tar_path}")
+    return tar_path
 
 
 def download(args):
@@ -57,11 +69,15 @@ def download(args):
     out_root = Path(args.root) / "raw_audios"
     out_root.mkdir(exist_ok=True, parents=True)
     print(f"{len(url_list)} files to download...")
-    for url in tqdm(url_list):
-        tar_path = out_root / Path(url).name
-        download_url_to_file(url, tar_path.as_posix(), hash_prefix=None)
-        _extract_tar(tar_path.as_posix())
-        os.remove(tar_path)
+
+    process_func = partial(process_url, out_root=out_root)
+
+    results = Parallel(n_jobs=args.num_workers)(delayed(process_func)(url) for url in url_list)
+    # for url in tqdm(url_list):
+    #     tar_path = out_root / Path(url).name
+    #     download_url_to_file(url, tar_path.as_posix(), hash_prefix=None)
+    #     _extract_tar(tar_path.as_posix())
+    #     os.remove(tar_path)
 
 
 def main():
