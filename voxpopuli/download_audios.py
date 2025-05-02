@@ -8,7 +8,9 @@ import os
 from pathlib import Path
 
 from tqdm import tqdm
-from torchaudio.datasets.utils import download_url, extract_archive
+from torchaudio.datasets.utils import _extract_tar
+from torch.hub import download_url_to_file
+
 
 from voxpopuli import LANGUAGES, LANGUAGES_V2, YEARS, DOWNLOAD_BASE_URL
 
@@ -57,8 +59,8 @@ def download(args):
     print(f"{len(url_list)} files to download...")
     for url in tqdm(url_list):
         tar_path = out_root / Path(url).name
-        download_url(url, out_root.as_posix(), Path(url).name)
-        extract_archive(tar_path.as_posix())
+        download_url_to_file(url, tar_path.as_posix(), hash_prefix=None)
+        _extract_tar(tar_path.as_posix())
         os.remove(tar_path)
 
 
