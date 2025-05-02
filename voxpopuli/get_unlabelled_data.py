@@ -80,7 +80,7 @@ def get(args):
         items[path.as_posix()].append((seg_no, float(start), float(end)))
     items = [(k, v, out_root.as_posix()) for k, v in items.items()]
     print(f"Segmenting {len(items):,} files...")
-    multiprocess_run(items, _segment)
+    multiprocess_run(items, _segment, n_workers=args.num_workers)
 
 
 def get_args():
@@ -92,6 +92,10 @@ def get_args():
         "--subset", "-s", type=str, required=True,
         choices=["400k", "100k", "10k", "10k_sd"] + LANGUAGES + LANGUAGES_V2,
         help="data subset to download"
+    )
+    parser.add_argument(
+        "--num_workers", "-j", type=int, default=4,
+        help="number of workers for segmenting data"
     )
     return parser.parse_args()
 
