@@ -13,7 +13,7 @@ from collections import defaultdict
 
 import torch
 import torchaudio
-from torchaudio.datasets.utils import download_url
+from torch.hub import download_url_to_file
 
 from voxpopuli import ASR_LANGUAGES, ASR_ACCENTED_LANGUAGES, DOWNLOAD_BASE_URL
 from voxpopuli.utils import multiprocess_run
@@ -43,7 +43,7 @@ def get(args):
     url = f"{DOWNLOAD_BASE_URL}/annotations/asr/asr_{args.lang}.tsv.gz"
     tsv_path = out_root / Path(url).name
     if not tsv_path.exists():
-        download_url(url, out_root.as_posix(), Path(url).name)
+        download_url_to_file(url, out_root.as_posix(), Path(url).name)
     with gzip.open(tsv_path, "rt") as f:
         metadata = [x for x in csv.DictReader(f, delimiter="|")]
     # Get segment into list
